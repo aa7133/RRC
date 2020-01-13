@@ -5,7 +5,8 @@ RRC parser from ASN to JSON
 
 ### Usage
 
-   
+   ```
+
 
 #### Build and Run a Command Line Tool
 for android please use: 
@@ -71,7 +72,6 @@ char *getBCCH_DL_SCH_MESSAGE_MBMS(int codingType, uint8_t *rcvBuffer, int &rcvBu
 char *getMCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
 char *getPCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
-```
 
 char *getDL_CCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
