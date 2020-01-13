@@ -85,8 +85,7 @@ char *getSC_MCCH_MESSAGE_R13(int codingType, uint8_t *rcvBuffer, int &rcvBufferS
 
 char *getSBCCH_SL_BCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getSBCCH_S```
-L_BCH_MESSAGE_V2X_R14(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+char *getSBCCH_SL_BCH_MESSAGE_V2X_R14(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
 char *getBCCH_BCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
