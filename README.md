@@ -5,7 +5,6 @@ RRC parser from ASN to JSON
 
 ### Usage
 
-   ```
 
 
 #### Build and Run a Command Line Tool
@@ -20,7 +19,9 @@ https://dev.to/bauripalash/how-to-run-c-programs-on-android-3cco
 mkdir 3rdparty
 cd 3rdparty
 git clone https://github.com/Cheedoong/xml2json.git
-cd ..
+
+#now on RRC directory
+
 mkdir build
 cd build
 cmake ..
@@ -52,11 +53,6 @@ size_t encodeBuffer(int codingType,
         uint8_t *buffer,
         size_t buffer_size);
 
-int decodeBuffer(int codingType,
-        asn_TYPE_descriptor_t *typeDescriptor,
-        void *objectData,
-        uint8_t *rcvBuffer,
-        int rcvBufferSize);
 char *getJsonFromASN(int codingType, asn_TYPE_descriptor_t *typeDescriptor, uint8_t *rcvBuffer, int &rcvBufferSize);
 
 char *getBCCH_BCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);

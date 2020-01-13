@@ -6,6 +6,8 @@
 // Created by adi ENZEL on 1/12/20.
 //
 #include "../include/rrc.h"
+#include "xml2json/include/xml2json.hpp"
+
 
 #ifdef __cplusplus
 extern "C"
@@ -27,6 +29,7 @@ size_t encodeBuffer(int codingType,
         uint8_t *buffer,
         size_t buffer_size) {
     asn_enc_rval_t er = asn_encode_to_buffer(nullptr, static_cast<asn_transfer_syntax>(codingType), typeDescriptor, objectData, buffer, buffer_size);
+    //asn_enc_rval_t er = asn_encode_to_buffer(0, ATS_BASIC_XER, typeDescriptor, objectData, buffer, buffer_size);
     if (er.encoded == -1) {
         fprintf(stderr, "Error encoding to buffer %s, %s\n", typeDescriptor->name, strerror(errno));
         return -1;
@@ -41,49 +44,6 @@ size_t encodeBuffer(int codingType,
     return er.encoded;
 }
 
-/**
- *
- * @param codingType
- * @param typeDescriptor
- * @param objectData
- * @param rcvBuffer
- * @param rcvBufferSize
- * @return
- */
-int decodeBuffer(int codingType,
-                 asn_TYPE_descriptor_t *typeDescriptor,
-                 void *objectData,
-                 uint8_t *rcvBuffer,
-                 int rcvBufferSize) {
-    objectData = nullptr;
-    asn_dec_rval_t rval;
-
-    rval = asn_decode(nullptr,
-                      static_cast<asn_transfer_syntax>(codingType),
-                      typeDescriptor,
-                      (void **) &objectData,
-                      rcvBuffer,
-                      rcvBufferSize);
-
-    if (rval.code != RC_OK) {
-        fprintf(stderr, "Error %d Decoding data\n", rval.code);
-        ASN_STRUCT_FREE(*typeDescriptor, objectData);
-        return -1;
-    }
-
-
-//#ifdef DEBUG_PARSER
-    char *printBuffer;
-    size_t size;
-
-    FILE *stream = open_memstream(&printBuffer, &size);
-    asn_fprint(stream, typeDescriptor, objectData);
-    fprintf(stdout, "Encoding past : %s", printBuffer);
-
-//#endif
-
-    return 0;
-}
 
 /**
  *
@@ -101,23 +61,56 @@ char *getJsonFromASN(int codingType,
                      int &rcvBufferSize) {
 
     void *pdu = nullptr;
-    if (decodeBuffer(codingType, typeDescriptor, pdu, rcvBuffer, rcvBufferSize) != 0) {
+    asn_dec_rval_t rval;
+
+    rval = asn_decode(nullptr,
+                      static_cast<asn_transfer_syntax>(codingType),
+                      typeDescriptor,
+                      (void **) &pdu,
+                      rcvBuffer,
+                      rcvBufferSize);
+
+    if (rval.code != RC_OK) {
+        fprintf(stderr, "Error %d Decoding data\n", rval.code);
+        ASN_STRUCT_FREE(*typeDescriptor, pdu);
         return nullptr;
     }
 
+
+//#ifdef DEBUG_PARSER
+    char *printBuffer;
+    size_t size;
+
+    FILE *stream = open_memstream(&printBuffer, &size);
+    asn_fprint(stream, typeDescriptor, pdu);
+    fprintf(stdout, "Encoding past : %s", printBuffer);
+
+//#endif
 
     uint8_t buffer[BUFFER_SIZE];
     auto bufferSize = BUFFER_SIZE;
-    auto size = encodeBuffer(ATS_BASIC_XER, typeDescriptor, pdu, buffer, bufferSize);
+    size = encodeBuffer(ATS_BASIC_XER, typeDescriptor, pdu, buffer, bufferSize);
     if (size < 0) {
+        fprintf(stdout, "Error fail to encode to XML");
+
         return nullptr;
+    } else {
+        fprintf(stdout, "XML buffer = \n%s", buffer);
+
     }
+
+    ASN_STRUCT_FREE(*typeDescriptor,pdu);
+
     auto json_str = xml2json((const char *)buffer);
-    auto retBuff = (char *)malloc(json_str.length() + 1);
-    memcpy(retBuff, json_str.c_str(), json_str.length());
+
+    char **retBuff = (char **)malloc(1);;
+    *retBuff = (char *)malloc(json_str.length() + 1);
+    fprintf(stdout, "JSON buffer = \n%s\n", json_str.c_str());
+    memcpy(*retBuff, json_str.c_str(), json_str.length());
     rcvBufferSize = json_str.length();
-    retBuff[rcvBufferSize] = 0;
-    return retBuff;
+    retBuff[rcvBufferSize] = nullptr;
+    fprintf(stdout, "JSON buffer = \n%s\n", *retBuff);
+    return *retBuff;
 
 }
 
