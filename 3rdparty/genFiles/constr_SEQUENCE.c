@@ -1062,8 +1062,9 @@ SEQUENCE_constraint(const asn_TYPE_descriptor_t *td, const void *sptr,
 				ctfailcb, app_key);
 			if(ret) return ret;
 		} else {
-			return elm->type->encoding_constraints.general_constraints(elm->type,
+			int ret =  elm->type->encoding_constraints.general_constraints(elm->type,
 				memb_ptr, ctfailcb, app_key);
+			if (ret) return ret;
 		}
 	}
 

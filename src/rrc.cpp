@@ -5,6 +5,7 @@
 //
 // Created by adi ENZEL on 1/12/20.
 //
+#include <genFiles/RRCConnectionReconfiguration.h>
 #include "../include/rrc.h"
 #include "xml2json/include/xml2json.hpp"
 
@@ -23,7 +24,7 @@ extern "C"
  * @param buffer_size
  * @return
  */
-size_t encodeBuffer(int codingType,
+__attribute__ ((visibility ("default"))) size_t encodeBuffer(int codingType,
         asn_TYPE_descriptor_t *typeDescriptor,
         const void *objectData,
         uint8_t *buffer,
@@ -55,7 +56,7 @@ size_t encodeBuffer(int codingType,
  */
 
 
-char *getJsonFromASN(int codingType,
+__attribute__ ((visibility ("default"))) char *getJsonFromASN(int codingType,
                      asn_TYPE_descriptor_t *typeDescriptor,
                      uint8_t *rcvBuffer,
                      int &rcvBufferSize) {
@@ -76,123 +77,125 @@ char *getJsonFromASN(int codingType,
         return nullptr;
     }
 
-
-//#ifdef DEBUG_PARSER
-    char *printBuffer;
     size_t size;
+
+#ifdef DEBUG_PARSER
+    char *printBuffer;
 
     FILE *stream = open_memstream(&printBuffer, &size);
     asn_fprint(stream, typeDescriptor, pdu);
     fprintf(stdout, "Encoding past : %s", printBuffer);
 
-//#endif
+#endif
 
-    uint8_t buffer[BUFFER_SIZE];
     auto bufferSize = BUFFER_SIZE;
-    size = encodeBuffer(ATS_BASIC_XER, typeDescriptor, pdu, buffer, bufferSize);
+    char **retBuff = (char **)malloc(1);
+    *retBuff = (char *)calloc(1, BUFFER_SIZE);
+
+    size = encodeBuffer(ATS_BASIC_XER, typeDescriptor, pdu, (uint8_t *)*retBuff, bufferSize);
     if (size < 0) {
         fprintf(stdout, "Error fail to encode to XML");
 
         return nullptr;
     } else {
-        fprintf(stdout, "XML buffer = \n%s", buffer);
+//        fprintf(stdout, "XML buffer = \n%s", buffer);
 
     }
 
     ASN_STRUCT_FREE(*typeDescriptor,pdu);
 
-    auto json_str = xml2json((const char *)buffer);
-
-    char **retBuff = (char **)malloc(1);;
-    *retBuff = (char *)malloc(json_str.length() + 1);
-    fprintf(stdout, "JSON buffer = \n%s\n", json_str.c_str());
-    memcpy(*retBuff, json_str.c_str(), json_str.length());
-    rcvBufferSize = json_str.length();
-    retBuff[rcvBufferSize] = nullptr;
-    fprintf(stdout, "JSON buffer = \n%s\n", *retBuff);
     return *retBuff;
 
+//    auto json_str = xml2json((const char *)buffer);
+//
+//    //fprintf(stdout, "JSON buffer = \n%s\n", json_str.c_str());
+//
+//    memcpy(*retBuff, json_str.c_str(), json_str.length());
+//    rcvBufferSize = json_str.length();
+//    (retBuff[rcvBufferSize]) = 0;
+//    //fprintf(stdout, "JSON buffer = \n%s\n", *retBuff);
+//    return *retBuff;
 }
 
 
-char *getBCCH_BCH_MESSAGE(int codingType,
+__attribute__ ((visibility ("default"))) char *getBCCH_BCH_MESSAGE(int codingType,
                           uint8_t *rcvBuffer,
                           int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_BCCH_BCH_Message, rcvBuffer,rcvBufferSize);
 }
 
-char *getBCCH_BCH_MESSAGE_MBMS(int codingType,
+__attribute__ ((visibility ("default"))) char *getBCCH_BCH_MESSAGE_MBMS(int codingType,
                                uint8_t *rcvBuffer,
                                int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_BCCH_BCH_Message_MBMS, rcvBuffer,rcvBufferSize);
 }
 
-char *getBCCH_DL_SCH_MESSAGE(int codingType,
+__attribute__ ((visibility ("default"))) char *getBCCH_DL_SCH_MESSAGE(int codingType,
                              uint8_t *rcvBuffer,
                              int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_BCCH_DL_SCH_Message, rcvBuffer,rcvBufferSize);
 }
 
-char *getBCCH_DL_SCH_MESSAGE_BR(int codingType,
+__attribute__ ((visibility ("default"))) char *getBCCH_DL_SCH_MESSAGE_BR(int codingType,
                                 uint8_t *rcvBuffer,
                                 int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_BCCH_DL_SCH_Message_BR, rcvBuffer,rcvBufferSize);
 }
 
-char *getBCCH_DL_SCH_MESSAGE_MBMS(int codingType,
+__attribute__ ((visibility ("default"))) char *getBCCH_DL_SCH_MESSAGE_MBMS(int codingType,
                                 uint8_t *rcvBuffer,
                                 int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_BCCH_DL_SCH_Message_MBMS, rcvBuffer,rcvBufferSize);
 }
 
-char *getMCCH_MESSAGE(int codingType,
+__attribute__ ((visibility ("default"))) char *getMCCH_MESSAGE(int codingType,
                       uint8_t *rcvBuffer,
                       int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_MCCH_Message, rcvBuffer,rcvBufferSize);
 }
 
-char *getPCCH_MESSAGE(int codingType,
+__attribute__ ((visibility ("default"))) char *getPCCH_MESSAGE(int codingType,
                       uint8_t *rcvBuffer,
                       int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_PCCH_Message, rcvBuffer,rcvBufferSize);
 }
 
-char *getDL_CCCH_MESSAGE(int codingType,
+__attribute__ ((visibility ("default"))) char *getDL_CCCH_MESSAGE(int codingType,
                          uint8_t *rcvBuffer,
                          int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_DL_CCCH_Message, rcvBuffer,rcvBufferSize);
 }
 
-char *getDL_DCCH_MESSAGE(int codingType,
+__attribute__ ((visibility ("default"))) char *getDL_DCCH_MESSAGE(int codingType,
                          uint8_t *rcvBuffer,
                          int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_DL_DCCH_Message, rcvBuffer,rcvBufferSize);
 }
 
-char *getUL_CCCH_MESSAGE(int codingType,
+__attribute__ ((visibility ("default"))) char *getUL_CCCH_MESSAGE(int codingType,
                          uint8_t *rcvBuffer,
                          int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_UL_CCCH_Message, rcvBuffer,rcvBufferSize);
 }
 
-char *getUL_DCCH_MESSAGE(int codingType,
+__attribute__ ((visibility ("default"))) char *getUL_DCCH_MESSAGE(int codingType,
                          uint8_t *rcvBuffer,
                          int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_UL_DCCH_Message, rcvBuffer,rcvBufferSize);
 }
 
-char *getSC_MCCH_MESSAGE_R13(int codingType,
+__attribute__ ((visibility ("default"))) char *getSC_MCCH_MESSAGE_R13(int codingType,
                          uint8_t *rcvBuffer,
                          int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
@@ -201,14 +204,14 @@ char *getSC_MCCH_MESSAGE_R13(int codingType,
 
 
 
-char *getSBCCH_SL_BCH_MESSAGE(int codingType,
+__attribute__ ((visibility ("default"))) char *getSBCCH_SL_BCH_MESSAGE(int codingType,
                               uint8_t *rcvBuffer,
                               int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_SBCCH_SL_BCH_Message, rcvBuffer,rcvBufferSize);
 }
 
-char *getSBCCH_SL_BCH_MESSAGE_V2X_R14(int codingType,
+__attribute__ ((visibility ("default"))) char *getSBCCH_SL_BCH_MESSAGE_V2X_R14(int codingType,
                                       uint8_t *rcvBuffer,
                                       int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
@@ -217,63 +220,63 @@ char *getSBCCH_SL_BCH_MESSAGE_V2X_R14(int codingType,
 
 
 
-char *getBCCH_BCH_MESSAGE_NB(int codingType,
+__attribute__ ((visibility ("default"))) char *getBCCH_BCH_MESSAGE_NB(int codingType,
           uint8_t *rcvBuffer,
           int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_BCCH_BCH_Message_NB, rcvBuffer,rcvBufferSize);
 }
 
-char *getBCCH_BCH_MESSAGE_TDD_NB(int codingType,
+__attribute__ ((visibility ("default"))) char *getBCCH_BCH_MESSAGE_TDD_NB(int codingType,
           uint8_t *rcvBuffer,
           int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_BCCH_BCH_Message_TDD_NB, rcvBuffer,rcvBufferSize);
 }
 
-char *getBCCH_DL_SCH_MESSAGE_NB(int codingType,
+__attribute__ ((visibility ("default"))) char *getBCCH_DL_SCH_MESSAGE_NB(int codingType,
           uint8_t *rcvBuffer,
           int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_BCCH_BCH_Message_NB, rcvBuffer,rcvBufferSize);
 }
 
-char *getPCCH_MESSAGE_NB(int codingType,
+__attribute__ ((visibility ("default"))) char *getPCCH_MESSAGE_NB(int codingType,
           uint8_t *rcvBuffer,
           int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_PCCH_Message_NB, rcvBuffer,rcvBufferSize);
 }
 
-char *getDL_CCCH_MESSAGE_NB(int codingType,
+__attribute__ ((visibility ("default"))) char *getDL_CCCH_MESSAGE_NB(int codingType,
                             uint8_t *rcvBuffer,
                             int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_DL_CCCH_Message_NB, rcvBuffer,rcvBufferSize);
 }
 
-char *getDL_DCCH_MESSAGE_NB(int codingType,
+__attribute__ ((visibility ("default"))) char *getDL_DCCH_MESSAGE_NB(int codingType,
                             uint8_t *rcvBuffer,
                             int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_DL_DCCH_Message_NB, rcvBuffer,rcvBufferSize);
 }
 
-char *getUL_CCCH_MESSAGE_NB(int codingType,
+__attribute__ ((visibility ("default"))) char *getUL_CCCH_MESSAGE_NB(int codingType,
           uint8_t *rcvBuffer,
           int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_UL_CCCH_Message_NB, rcvBuffer,rcvBufferSize);
 }
 
-char *getSC_MCCH_MESSAGE_NB(int codingType,
+__attribute__ ((visibility ("default"))) char *getSC_MCCH_MESSAGE_NB(int codingType,
           uint8_t *rcvBuffer,
           int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER
     return getJsonFromASN(codingType, &asn_DEF_SC_MCCH_Message_NB, rcvBuffer,rcvBufferSize);
 }
 
-char *getUL_DCCH_MESSAGE_NB(int codingType,
+__attribute__ ((visibility ("default"))) char *getUL_DCCH_MESSAGE_NB(int codingType,
           uint8_t *rcvBuffer,
           int &rcvBufferSize) {
     //ATS_ALIGNED_BASIC_PER

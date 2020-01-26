@@ -23,13 +23,30 @@
 
 #include <cstring>
 #include <string.h>
-//#include <error.h>
 #include <cerrno>
 #include <ctime>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <vector>
 
+#include <genFiles/DL-DCCH-Message.h>
+#include <genFiles/DL-DCCH-MessageType.h>
+#include <genFiles/RRCConnectionReconfiguration.h>
+#include <genFiles/RRCConnectionReconfiguration-r8-IEs.h>
+#include <genFiles/MeasConfig.h>
+#include <genFiles/MeasIdToRemoveList.h>
+#include <genFiles/MeasIdToAddModList.h>
+#include <genFiles/MeasIdToAddMod.h>
+#include <genFiles/RadioResourceConfigDedicated.h>
+#include <genFiles/MAC-MainConfig.h>
+#include <genFiles/DRX-Config.h>
+#include <genFiles/RRCConnectionReestablishment-r8-IEs.h>
+#include <sstream>
 
 using namespace std;
 
@@ -44,14 +61,13 @@ using namespace std;
 //52 04 7B 2E 10 32 85 78 2E 20 30 41
 //98 2E 30 10 40 38 2E 30 00 01 00 44
 //11 0C 23 E4 94 1C 80 C0 00 C0 1A 9C
-//0F FD D8 04 5F 61 37 01 EB BB 05 0C
+//0F FD D8 04 5F 61 37 01 EB BB 05 0Cstruct DL_DCCH_MessageType__c1
 //C4 2F A8 DA 00 F5 DD 82 97 22 35 6E
 //F3 25 95 0E 1D 00 06 02 00 0A 40 02
 //02 83 38 81 80 68 09 05 E1 42 42 C0
 //        C0 34 0A 02 C9 47 86 08 1A 90 59 4B
 //17 33 40 FF FF FF FF FF FF FF FF 41
 //12 10 68 03 A0
-
 
 uint8_t data[197] = {/* header */0xC5, 0x00, 0xC0, 0xB0, 0x7D, 0x58, 0xF8, 0xD1, 0x42, 0x1A, 0xEB, 0x00,
               /* payload */ 0x1A, 0x0F, 0x50, 0x0F, 0x60, 0x01, 0x93, 0x01, 0xF6, 0x13, 0x00, 0x00,
@@ -79,7 +95,8 @@ uint8_t dataWitoutHeader[185] = {/* payload */ 0x1A, 0x0F, 0x50, 0x0F, 0x60, 0x0
                                  0x88, 0x40, 0x04, 0x09, 0xFB, 0x3C, 0xA0, 0x25, 0x1C, 0x17, 0x73, 0x85,
                                  0x04, 0x80, 0xF0, 0x2E, 0x26, 0x25, 0xC5, 0xC5, 0xB8, 0xD9, 0x28, 0x1F,
                                  0x28, 0xE4, 0x6C, 0xA0, 0x9D, 0xB3, 0x95, 0xB8, 0x70, 0x44, 0x80, 0x35,
-                                 0x2B, 0x82, 0x06, 0x0C, 0x03, 0x56, 0x70, 0x58, 0x00, 0x60, 0x06, 0x00,
+
+        0x2B, 0x82, 0x06, 0x0C, 0x03, 0x56, 0x70, 0x58, 0x00, 0x60, 0x06, 0x00,
                                  0x52, 0x04, 0x7B, 0x2E, 0x10, 0x32, 0x85, 0x78, 0x2E, 0x20, 0x30, 0x41,
                                  0x98, 0x2E, 0x30, 0x10, 0x40, 0x38, 0x2E, 0x30, 0x00, 0x01, 0x00, 0x44,
                                  0x11, 0x0C, 0x23, 0xE4, 0x94, 0x1C, 0x80, 0xC0, 0x00, 0xC0, 0x1A, 0x9C,
@@ -92,13 +109,552 @@ uint8_t dataWitoutHeader[185] = {/* payload */ 0x1A, 0x0F, 0x50, 0x0F, 0x60, 0x0
                                  0x12, 0x10, 0x68, 0x03, 0xA0
 };
 
-int main(const int argc, char **argv) {
-    auto bufferLength = 185;
-    char *json = getDL_DCCH_MESSAGE(ATS_ALIGNED_BASIC_PER, dataWitoutHeader, bufferLength);
-    if (json == nullptr) {
-        std::cout << "Error parsing buffer " << std::endl;
-    } else {
-        std::cout << "buffer is : " << std::endl << json << std::endl;
-        free(json);
+
+//Header:  4C 00 C0 B0 6F 36 DA 62 4D 2F EB 00
+//Payload: 1A 0F 40 00 00 01 2F 01 F6 13 00 00
+//A6 38 09 00 00 00 00 2B 00 22 12 03
+//07 C0 11 0C 85 31 D0 95 2D 8D 73 E1
+//19 4E 95 B5 F1 9D 6F 9D F7 C6 01 80
+//23 08 C6 43 0C B1 05 A9 D2 B6 74 E1
+//        A0 00 C0 00
+
+
+
+uint8_t data2[76] = {0x4C, 0x00, 0xC0, 0xB0, 0x6F, 0x36, 0xDA, 0x62, 0x4D, 0x2F, 0xEB, 0x00,
+                      0x1A, 0x0F, 0x40, 0x00, 0x00, 0x01, 0x2F, 0x01, 0xF6, 0x13, 0x00, 0x00,
+                      0xA6, 0x38, 0x09, 0x00, 0x00, 0x00, 0x00, 0x2B, 0x00, 0x22, 0x12, 0x03,
+                      0x07, 0xC0, 0x11, 0x0C, 0x85, 0x31, 0xD0, 0x95, 0x2D, 0x8D, 0x73, 0xE1,
+                      0x19, 0x4E, 0x95, 0xB5, 0xF1, 0x9D, 0x6F, 0x9D, 0xF7, 0xC6, 0x01, 0x80,
+                      0x23, 0x08, 0xC6, 0x43, 0x0C, 0xB1, 0x05, 0xA9, 0xD2, 0xB6, 0x74, 0xE1,
+                      0xA0, 0x00, 0xC0, 0x00};
+
+uint8_t data2WitoutHeader[64] = {0x1A, 0x0F, 0x40, 0x00, 0x00, 0x01, 0x2F, 0x01, 0xF6, 0x13, 0x00, 0x00,
+                     0xA6, 0x38, 0x09, 0x00, 0x00, 0x00, 0x00, 0x2B, 0x00, 0x22, 0x12, 0x03,
+                     0x07, 0xC0, 0x11, 0x0C, 0x85, 0x31, 0xD0, 0x95, 0x2D, 0x8D, 0x73, 0xE1,
+                     0x19, 0x4E, 0x95, 0xB5, 0xF1, 0x9D, 0x6F, 0x9D, 0xF7, 0xC6, 0x01, 0x80,
+                     0x23, 0x08, 0xC6, 0x43, 0x0C, 0xB1, 0x05, 0xA9, 0xD2, 0xB6, 0x74, 0xE1,
+                     0xA0, 0x00, 0xC0, 0x00};
+
+uint8_t newData[630] = {/*Payload:*/ 0x1A, 0x0F, 0x50, 0x0F, 0x60, 0x01, 0x0A, 0x00, 0xB0, 0x04, 0x01, 0x00,
+                                           0x11, 0xD2, 0x09, 0x00, 0x00, 0x00, 0x00, 0x61, 0x02, 0x26, 0x1B, 0xFF,
+                                           0x80, 0x06, 0x11, 0x09, 0x40, 0x5D, 0xCF, 0x10, 0x00, 0x49, 0x84, 0x4E,
+                                           0xD1, 0x11, 0xA6, 0x34, 0x33, 0x09, 0xB9, 0x61, 0x40, 0xF9, 0x05, 0xF3,
+                                           0x13, 0xE8, 0x37, 0xD4, 0x8F, 0xB1, 0x5F, 0x70, 0xB0, 0x00, 0xC0, 0x00,
+                                           0x0A, 0xFF, 0xFF, 0xB9, 0x60, 0x13, 0x30, 0x22, 0xD6, 0x08, 0xA6, 0xC1,
+                                           0xA6, 0xD8, 0x45, 0x6B, 0x8B, 0x06, 0x61, 0xA9, 0x6C, 0x3D, 0xC5, 0x88,
+                                           0xB9, 0xB1, 0x3A, 0x46, 0x2B, 0x57, 0x15, 0xEB, 0x1A, 0x50, 0x3E, 0x41,
+                                           0x7C, 0xC4, 0xFA, 0x0D, 0xF5, 0x23, 0xEC, 0x57, 0xDC, 0x25, 0x30, 0x8E,
+                                           0x04, 0x58, 0x50, 0x82, 0xE0, 0x05, 0x30, 0x50, 0xB2, 0xE1, 0x02, 0x30,
+                                           0x41, 0x43, 0x70, 0x94, 0xC2, 0x38, 0x8E, 0x00, 0x00, 0x20, 0x0F, 0x86,
+                                           0x40, 0x72, 0x03, 0x00, 0x03, 0x00, 0x1A, 0x00, 0x24, 0x28, 0x09, 0x60,
+                                           0x05, 0x81, 0x45, 0x06, 0x25, 0x53, 0xFF, 0x8F, 0x95, 0xBF, 0x78, 0x74,
+                                           0x45, 0x06, 0x9A, 0x80, 0x18, 0x01, 0x01, 0x00, 0x88, 0x82, 0xC5, 0xFA,
+                                           0x95, 0x5F, 0x6A, 0x0D, 0x40, 0x06, 0x50, 0x06, 0x00, 0x1C, 0x01, 0xC8,
+                                           0x25, 0x80, 0x35, 0xB0, 0x1F, 0xFB, 0xB0, 0x0B, 0x81, 0xFF, 0xBB, 0x00,
+                                           0x8A, 0xEA, 0x20, 0x7A, 0xEE, 0x50, 0x03, 0xA1, 0x1B, 0xEC, 0x36, 0xE0,
+                                           0x3D, 0x77, 0x28, 0x05, 0x98, 0x85, 0xF9, 0x80, 0x6E, 0xE9, 0x2D, 0x39,
+                                           0x0F, 0x95, 0x10, 0x80, 0x01, 0x80, 0xD0, 0x6A, 0xA6, 0x96, 0xFF, 0xFF,
+                                           0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xD0, 0xDA, 0x1B, 0x05, 0x20, 0x01,
+                                           0x01, 0x41, 0x9C, 0x40, 0xC0, 0x34, 0x04, 0x84, 0x40, 0xA1, 0x21, 0x61,
+                                           0xB8, 0x70, 0x1C, 0x87, 0x42, 0x24, 0x18, 0x0B, 0x53, 0xE0, 0x3C, 0x09,
+                                           0xC0, 0xBB, 0x81, 0xCA, 0x72, 0xB9, 0x9A, 0x07, 0xFF, 0xFF, 0xFF, 0xFF,
+                                           0xFF, 0xFF, 0xFF, 0xF9, 0x08, 0x90, 0x83, 0x40, 0x1D, 0x04, 0x10, 0x43,
+                                           0xA7, 0x40, 0xA3, 0x04, 0x40, 0xA1, 0xAE, 0x20, 0x58, 0x22, 0x18, 0xE2,
+                                           0xAF, 0xE4, 0x09, 0x06, 0xE2, 0x74, 0x07, 0xC2, 0x14, 0x08, 0x10, 0x79,
+                                           0xB6, 0x02, 0x0D, 0x6E, 0x9D, 0x3B, 0x89, 0x11, 0x68, 0x3D, 0x04, 0x00,
+                                           0x46, 0x07, 0x98, 0x88, 0x00, 0x00, 0x06, 0x18, 0x67, 0x20, 0x4A, 0x28,
+                                           0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x00, 0x4D, 0xC1, 0x10, 0x80,
+                                           0x00, 0x04, 0x02, 0x00, 0x68, 0x0D, 0x76, 0x00, 0x8C, 0x10, 0x50, 0x90,
+                                           0x00, 0x00, 0x0C, 0x38, 0x67, 0x20, 0x58, 0x82, 0x20, 0x07, 0x17, 0x1A,
+                                           0x87, 0xB3, 0x24, 0xB0, 0x13, 0x8C, 0x21, 0xB8, 0x83, 0x7D, 0x9A, 0x6A,
+                                           0x22, 0xB0, 0x12, 0x10, 0x51, 0x46, 0x7E, 0xBB, 0x70, 0x02, 0x02, 0x40,
+                                           0x49, 0x30, 0x36, 0x20, 0x0D, 0xC2, 0x10, 0x80, 0x00, 0x04, 0x05, 0x94,
+                                           0x83, 0x83, 0x20, 0x81, 0x00, 0x11, 0x02, 0x00, 0x90, 0x00, 0x08, 0x0D,
+                                           0x62, 0x02, 0xC3, 0x21, 0x3A, 0x80, 0x00, 0x8E, 0x0C, 0x00, 0xCA, 0x00,
+                                           0x08, 0x00, 0x99, 0xAA, 0xA2, 0x40, 0x06, 0x00, 0x08, 0x20, 0x61, 0x30,
+                                           0x00, 0x00, 0xC1, 0x0A, 0x01, 0x81, 0x00, 0x06, 0x09, 0x50, 0x0C, 0x10,
+                                           0x00, 0x30, 0x52, 0x80, 0x60, 0xC0, 0x01, 0x82, 0xD4, 0x03, 0x0A, 0x00,
+                                           0x0C, 0x1A, 0xA0, 0x10, 0x06, 0x01, 0x82, 0x93, 0x49, 0xA4, 0x34, 0x92,
+                                           0x40, 0x80, 0x0C, 0x10, 0xEC, 0x61, 0x0D, 0xC4, 0x1B, 0x8F, 0xBD, 0x0A,
+                                           0x39, 0x8A, 0x4E, 0x50, 0x28, 0x20, 0x08, 0x05, 0x70, 0x00, 0x08, 0x00,
+                                           0x01, 0x00, 0x00, 0x00, 0x00, 0x11, 0x08, 0xAD, 0x54, 0x56, 0x04, 0x30,
+                                           0x00, 0x10, 0x84, 0x00, 0x02, 0x21, 0x11, 0x70, 0xC0, 0x18, 0x08, 0x08,
+                                           0x82, 0x00, 0x01, 0x10, 0x88, 0xB8, 0x60, 0x0C, 0x08, 0x04, 0x21, 0x00,
+                                           0x00, 0x88, 0x44, 0x5C, 0x40, 0x06, 0x06, 0x02, 0x20, 0x80, 0x00, 0x44,
+                                           0x22, 0x2E, 0x20, 0x03, 0x04, 0x22, 0xA5, 0x40, 0x00, 0x44, 0x22, 0x2E,
+                                           0x08, 0x10, 0x44, 0x00, 0xC0, 0x00, 0x40, 0x80, 0xC0, 0x10, 0x01, 0x00,
+                                           0xE0, 0x37, 0x00, 0x01, 0x1C, 0x10, 0x00, 0x00, 0x02, 0x00, 0x40, 0x00,
+                                           0x80, 0x50, 0x02, 0x20, 0x28, 0x00, 0x20, 0x0B, 0xC0, 0x01, 0x05, 0xB8,
+                                           0x82, 0x08, 0x20, 0x82, 0x08, 0x21, 0xE0, 0x7F, 0x20, 0xFF, 0x03, 0x26,
+                                           0x60, 0x00, 0x80, 0x00, 0x00, 0x6A, 0x00, 0x00, 0x12, 0x28, 0x12, 0x51,
+                                           0x3F, 0x1F, 0x8A, 0x2E, 0x9B, 0x0E};
+
+
+uint8_t extra[618] = {
+        0x1A, 0x0F, 0x50, 0x0F, 0x60, 0x01, 0x97, 0x00, 0xFB, 0x04, 0x01, 0x00,
+        0xC1, 0xC6, 0x09, 0x00, 0x00, 0x00, 0x00, 0x3A, 0x02, 0x24, 0x1B, 0xFF,
+        0x80, 0x42, 0x30, 0x88, 0x42, 0x03, 0xE8, 0x78, 0xA0, 0x7C, 0x82, 0xF9,
+        0x89, 0xF4, 0x1B, 0xEA, 0x47, 0xD8, 0xAF, 0xB8, 0x58, 0x00, 0x60, 0x00,
+        0x01, 0x7F, 0xFF, 0xCC, 0x50, 0x3E, 0x41, 0x7C, 0xC4, 0xFA, 0x0D, 0xF5,
+        0x23, 0xEC, 0x57, 0xDC, 0x42, 0x19, 0x04, 0x50, 0x22, 0xC2, 0x84, 0x17,
+        0x00, 0x29, 0x82, 0x85, 0x97, 0x08, 0x11, 0x82, 0x5A, 0x1B, 0x88, 0x43,
+        0x20, 0x8A, 0x22, 0x80, 0x00, 0x08, 0x03, 0xE1, 0x90, 0x1C, 0x80, 0xC0,
+        0x00, 0xC0, 0x06, 0x80, 0x09, 0x0A, 0x02, 0x7D, 0x81, 0x64, 0xB9, 0x01,
+        0x8A, 0x0B, 0xFF, 0xE3, 0xE5, 0x6F, 0xDE, 0x55, 0x15, 0x81, 0x67, 0x20,
+        0x06, 0x00, 0x40, 0x30, 0x16, 0x60, 0x71, 0x7E, 0xA5, 0x57, 0xDA, 0x83,
+        0x50, 0x01, 0x94, 0x01, 0x80, 0x07, 0x00, 0x72, 0x09, 0xF6, 0x0D, 0x6C,
+        0x07, 0xFE, 0xEC, 0x02, 0xE0, 0x7F, 0xEE, 0xC0, 0x22, 0xBA, 0x88, 0x1E,
+        0xBB, 0x94, 0x00, 0xE8, 0x46, 0xFB, 0x0D, 0xB8, 0x0F, 0x5D, 0xCA, 0x01,
+        0x66, 0x21, 0x7E, 0xC0, 0x1B, 0xBA, 0x4C, 0xDA, 0x43, 0xE5, 0x44, 0x20,
+        0x00, 0x60, 0x34, 0x1A, 0xA9, 0xA5, 0xBF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xF4, 0x00, 0x84, 0xC1, 0x48, 0x00, 0x40, 0x50, 0x67, 0x10,
+        0x30, 0x0D, 0x00, 0x01, 0x36, 0x28, 0x48, 0x58, 0x56, 0x14, 0x05, 0x21,
+        0x50, 0x89, 0x3E, 0x02, 0xD4, 0xFA, 0x09, 0xE3, 0xCE, 0x07, 0xD0, 0x0E,
+        0x53, 0x95, 0xCC, 0xD0, 0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xC8, 0x44, 0x84, 0x1A, 0x00, 0xE8, 0x20, 0x82, 0x1D, 0x3A, 0x05, 0x18,
+        0x22, 0x05, 0x0D, 0x71, 0x02, 0xC1, 0x10, 0xC7, 0x15, 0x7F, 0x20, 0x48,
+        0x37, 0x13, 0xA0, 0x3E, 0x10, 0xA0, 0x40, 0x83, 0xCD, 0xB0, 0x10, 0x6B,
+        0x74, 0xE9, 0xDC, 0x47, 0xE3, 0x41, 0xF3, 0xD8, 0x02, 0x30, 0x3E, 0x3B,
+        0x40, 0x00, 0x00, 0x30, 0xC3, 0x39, 0x02, 0x51, 0x40, 0xF8, 0x00, 0x00,
+        0x00, 0x00, 0x01, 0x80, 0x02, 0x6E, 0x08, 0x84, 0x00, 0x00, 0x20, 0x10,
+        0x03, 0x40, 0x6B, 0xB0, 0x04, 0x60, 0x85, 0x72, 0x80, 0x00, 0x00, 0x61,
+        0xC3, 0x39, 0x02, 0xC4, 0x11, 0x00, 0x34, 0xB8, 0xD4, 0x3D, 0x99, 0x35,
+        0xC0, 0x9C, 0x61, 0x0D, 0xC4, 0x1B, 0xEC, 0xD3, 0x4F, 0xC5, 0x80, 0x90,
+        0x82, 0x8A, 0x39, 0x6D, 0xDB, 0x80, 0x10, 0x12, 0x02, 0x49, 0x81, 0xB1,
+        0x00, 0x6E, 0x10, 0x84, 0x00, 0x00, 0x20, 0x2C, 0xA4, 0x1C, 0x19, 0x04,
+        0x08, 0x00, 0x88, 0x10, 0x04, 0x80, 0x00, 0x40, 0x6B, 0x10, 0x16, 0x18,
+        0x29, 0xD4, 0x00, 0x04, 0x70, 0x60, 0x06, 0x50, 0x00, 0x40, 0x04, 0xCD,
+        0x55, 0x12, 0x00, 0x30, 0x00, 0x41, 0x03, 0x09, 0x80, 0x00, 0x06, 0x08,
+        0x50, 0x0C, 0x08, 0x00, 0x30, 0x4A, 0x80, 0x60, 0x80, 0x01, 0x82, 0x94,
+        0x03, 0x06, 0x00, 0x0C, 0x16, 0xA0, 0x18, 0x40, 0x00, 0x60, 0xC5, 0x00,
+        0x80, 0x30, 0x0C, 0x10, 0x9A, 0x4D, 0x21, 0xA4, 0x92, 0x04, 0x00, 0x60,
+        0x87, 0x63, 0x08, 0x6E, 0x20, 0xDC, 0x7D, 0xE8, 0x51, 0xCC, 0x52, 0x72,
+        0x81, 0x41, 0x00, 0x40, 0x2B, 0x80, 0x00, 0x40, 0x00, 0x08, 0x00, 0x00,
+        0x00, 0x00, 0x88, 0x45, 0x6A, 0xA2, 0xB0, 0x21, 0x80, 0x00, 0x84, 0x20,
+        0x00, 0x11, 0x07, 0xE3, 0x86, 0x00, 0xC0, 0x40, 0x44, 0x10, 0x00, 0x08,
+        0x83, 0xF1, 0xC3, 0x00, 0x60, 0x40, 0x21, 0x08, 0x00, 0x04, 0x41, 0xF8,
+        0xE2, 0x00, 0x30, 0x30, 0x11, 0x04, 0x00, 0x02, 0x20, 0xFC, 0x71, 0x00,
+        0x18, 0x21, 0x15, 0x2A, 0x00, 0x02, 0x20, 0xFC, 0x70, 0x40, 0x82, 0x20,
+        0x06, 0x00, 0x02, 0x04, 0x06, 0x00, 0x80, 0x08, 0x07, 0x00, 0x38, 0x00,
+        0x08, 0xE0, 0x80, 0x00, 0x00, 0x10, 0x02, 0x00, 0x04, 0x02, 0x80, 0x11,
+        0x01, 0x40, 0x01, 0x00, 0x5E, 0x00, 0x08, 0x2D, 0xC4, 0x10, 0x41, 0x04,
+        0x10, 0x41, 0x0F, 0x03, 0xF9, 0x07, 0xF8, 0x19, 0x33, 0x00, 0x04, 0x00,
+        0x00, 0x03, 0x50, 0x00, 0x00, 0x91, 0x40, 0x92, 0x89, 0xF8, 0xFC, 0x51,
+        0x74, 0xD8, 0x70
+
+};
+
+
+uint8_t stam[27] = {0x1A, 0x0F, 0x50, 0x0F, 0x60, 0x00, 0xAC, 0x01, 0xB0, 0x04, 0x01, 0x00,
+                    0x00, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x92, 0xB7,
+                    0x40, 0xD3, 0x68};
+
+uint8_t stam1[27] = {0x1A, 0x0F, 0x50, 0x0F, 0x60, 0x00, 0xAC, 0x01, 0xB0, 0x04, 0x01, 0x00,
+                     0x00, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x02, 0xCF, 0xFA,
+                     0x40, 0xE7, 0xF8};
+
+uint8_t stam2[27] = {0x1A, 0x0F, 0x50, 0x0F, 0x60, 0x00, 0x6D, 0x01, 0xB0, 0x04, 0x01, 0x00,
+0x00, 0x00, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x0A, 0xF9, 0xBA,
+0xC6, 0x0B, 0xD8};
+
+
+void readLine(const string &line, vector<uint8_t> &entries, const string &delimiter);
+
+auto trans = [](std::string ch) -> uint8_t {
+    return (uint8_t)std::stoi(ch, 0, 16);
+};
+
+
+int geDatafromFile(char *filename, uint8_t *data, int datalength) {
+    std::ifstream file(filename);
+    if (file.is_open()) {
+        std::string line;
+        vector<uint8_t> entries {};
+        string delimiter = " ";
+        while (getline(file, line)) {
+            readLine(line, entries, delimiter);
+            //printf("%s", line.c_str());
+        }
+        file.close();
+        memset(data, 0, datalength);
+        for (auto i = 0; i < (int)entries.size(); i++) {
+            data[i] = entries.at(i);
+        }
+        //transform(entries.begin(), entries.end(), data, [] (uint8_t entry) -> uint8_t {return entry;});
+        return entries.size();
     }
+    return 0;
+}
+
+void readLine(const string &line, vector<uint8_t> &entries, const string &delimiter) {
+    size_t prev = 0;
+    size_t pos = 0;
+    do {
+        if ((pos = line.find(delimiter, prev)) == string::npos) {
+            //when not found position is end of the line
+            pos = line.length();
+        }
+        string ch = line.substr(prev, pos);
+        if (!ch.empty()) {
+            entries.push_back((uint8_t)std::stoi(ch, 0, 16));
+        }
+        prev = pos + delimiter.length(); // move to next entry
+    } while (pos < line.length() && prev < line.length());
+}
+
+int main(const int argc, char **argv) {
+
+    vector<char *> filelist {};
+    for (auto i = 1; i < argc; i++) {
+         filelist.push_back(argv[i]);
+    }
+    if (filelist.empty()) {
+        fprintf(stderr,"no files in the list. Please enter at least one file name");
+        exit(-1);
+    }
+
+    uint8_t data[BUFFER_SIZE];
+    int dataLength = BUFFER_SIZE;
+    for (char *fileName : filelist) {
+        auto length = geDatafromFile(fileName, data, dataLength);
+        cout << "file : " << fileName << " : " << endl;
+        char *buffer = getUL_CCCH_MESSAGE(ATS_UNALIGNED_CANONICAL_PER, &stam2[21], length);
+        if (buffer == nullptr) {
+            std::cout << "Error parsing buffer " << std::endl;
+        } else {
+            std::cout << std::endl << buffer << std::endl;
+            free(buffer);
+        }
+    }
+
+//    auto bufferLength = 27;
+//    char *json = getUL_CCCH_MESSAGE(ATS_UNALIGNED_CANONICAL_PER, &stam2[21], bufferLength);
+//    if (json == nullptr) {
+//        std::cout << "Error parsing buffer " << std::endl;
+//    } else {
+//        std::cout << "buffer is : " << std::endl << json << std::endl;
+//        free(json);
+//    }
+
+//    bufferLength = 630;
+//    json = getDL_DCCH_MESSAGE(ATS_UNALIGNED_CANONICAL_PER, &newData[21], bufferLength);
+//    if (json == nullptr) {
+//        std::cout << "Error parsing buffer " << std::endl;
+//    } else {
+//        std::cout << "buffer is : " << std::endl << json << std::endl;
+//        free(json);
+//    }
+//
+//    bufferLength = 618;
+//    json = getDL_DCCH_MESSAGE(ATS_UNALIGNED_CANONICAL_PER, &extra[21], bufferLength);
+//    if (json == nullptr) {
+//        std::cout << "Error parsing buffer " << std::endl;
+//    } else {
+//        std::cout << "buffer is : " << std::endl << json << std::endl;
+//        free(json);
+//    }
+//
+//    bufferLength = 185;
+//    json = getDL_DCCH_MESSAGE(ATS_UNALIGNED_CANONICAL_PER, &dataWitoutHeader[21], bufferLength);
+//    if (json == nullptr) {
+//        std::cout << "Error parsing buffer " << std::endl;
+//    } else {
+//        std::cout << "buffer is : " << std::endl << json << std::endl;
+//        free(json);
+//    }
+
+//    char errbuf[200];
+//    std::size_t errlen = 200;
+//    size_t size;
+//
+//    MeasConfig_t measConfig;// = (MeasConfig_t *)calloc(1, sizeof(MeasConfig_t));
+//    //memset(&measConfig, 0, sizeof(MeasConfig_t));
+//    ASN_STRUCT_RESET(asn_DEF_MeasConfig, &measConfig);
+//
+//    MeasIdToRemoveList_t measIdToRemoveList;
+//    MeasId_t measIdArray[32] {};
+//    for (auto i = 0; i < 32; i++) {
+//        measIdArray[i] = i + 1;
+//        ASN_SEQUENCE_ADD(&(measIdToRemoveList.list), &measIdArray[i]);
+//    }
+//
+//    measConfig.measIdToAddModList = (MeasIdToAddModList *)calloc(1, sizeof(MeasIdToAddModList_t));
+//    ASN_STRUCT_RESET(asn_DEF_MeasIdToAddModList, measConfig.measIdToAddModList);
+//
+//    MeasIdToAddModList_t measIdToAddModList; // = measConfig->measIdToAddModList;
+//    {
+//        auto *measIdToAddMod1 = (MeasIdToAddMod_t *) calloc(1, sizeof(MeasIdToAddMod_t));
+//        ASN_STRUCT_RESET(asn_DEF_MeasIdToAddMod, measIdToAddMod1);
+//        MeasId_t measId1 = 1;
+//        measIdToAddMod1->measId = measId1;
+//        measIdToAddMod1->measObjectId = 4;
+//        measIdToAddMod1->reportConfigId = 1;
+//        ASN_SEQUENCE_ADD(&measIdToAddModList.list, measIdToAddMod1);
+//    }
+//
+//    {
+//        auto *measIdToAddMod1 = (MeasIdToAddMod_t *) calloc(1, sizeof(MeasIdToAddMod_t));
+//        ASN_STRUCT_RESET(asn_DEF_MeasIdToAddMod, measIdToAddMod1);
+//        MeasId_t measId1 = 2;
+//        measIdToAddMod1->measId = measId1;
+//        measIdToAddMod1->measObjectId = 4;
+//        measIdToAddMod1->reportConfigId = 2;
+//        ASN_SEQUENCE_ADD(&measIdToAddModList.list, measIdToAddMod1);
+//    }
+//
+//    {
+//        auto *measIdToAddMod1 = (MeasIdToAddMod_t *) calloc(1, sizeof(MeasIdToAddMod_t));
+//        ASN_STRUCT_RESET(asn_DEF_MeasIdToAddMod, measIdToAddMod1);
+//        MeasId_t measId1 = 4;
+//        measIdToAddMod1->measId = measId1;
+//        measIdToAddMod1->measObjectId = 4;
+//        measIdToAddMod1->reportConfigId = 5;
+//        ASN_SEQUENCE_ADD(&measIdToAddModList.list, measIdToAddMod1);
+//    }
+//
+//    {
+//        auto *measIdToAddMod1 = (MeasIdToAddMod_t *) calloc(1, sizeof(MeasIdToAddMod_t));
+//        ASN_STRUCT_RESET(asn_DEF_MeasIdToAddMod, measIdToAddMod1);
+//        MeasId_t measId1 = 7;
+//        measIdToAddMod1->measId = measId1;
+//        measIdToAddMod1->measObjectId = 4;
+//        measIdToAddMod1->reportConfigId = 6;
+//        ASN_SEQUENCE_ADD(&measIdToAddModList.list, measIdToAddMod1);
+//    }
+//
+//    measConfig.measIdToRemoveList = &measIdToRemoveList;
+//    measConfig.measIdToAddModList = &measIdToAddModList;
+//    if (asn_check_constraints(&asn_DEF_MeasConfig, &measConfig, errbuf, &errlen) != 0) {
+//        fprintf(stderr, "%s Constraint validation failed: %s\n", asn_DEF_MeasConfig.name, errbuf);
+//    } else {
+//        char *printBuffer;
+//        FILE *stream = open_memstream(&printBuffer, &size);
+//        asn_fprint(stream, &asn_DEF_MeasConfig, &measConfig);
+//        //fprintf(stdout, "Encoding past : %s", printBuffer);
+//    }
+//
+//
+//
+//
+////    auto *r8 = (RRCConnectionReconfiguration_r8_IEs_t *)calloc(1, sizeof(RRCConnectionReconfiguration_r8_IEs_t));
+//    RRCConnectionReconfiguration_r8_IEs_t r8;// = (RRCConnectionReconfiguration_r8_IEs_t *)calloc(1, sizeof(RRCConnectionReconfiguration_r8_IEs_t));
+//    memset(&r8, 0, sizeof(RRCConnectionReconfiguration_r8_IEs_t));
+//    ASN_STRUCT_RESET(asn_DEF_RRCConnectionReconfiguration_r8_IEs, &r8);
+//
+//
+//    r8.measConfig = &measConfig;
+//   // r8.radioResourceConfigDedicated = &radioResourceConfigDedicated;
+//    r8.radioResourceConfigDedicated = (RadioResourceConfigDedicated_t *)calloc(1, sizeof(RadioResourceConfigDedicated_t));
+//    ASN_STRUCT_RESET(asn_DEF_RadioResourceConfigDedicated, r8.radioResourceConfigDedicated);
+//
+////    r8.radioResourceConfigDedicated->mac_MainConfig =
+////            (RadioResourceConfigDedicated_t::RadioResourceConfigDedicated__mac_MainConfig *)calloc(1, sizeof(RadioResourceConfigDedicated_t::RadioResourceConfigDedicated__mac_MainConfig));
+////    auto *mac_MainCon = r8.radioResourceConfigDedicated->mac_MainConfig;
+//    auto *mac_MainCon = (RadioResourceConfigDedicated_t::RadioResourceConfigDedicated__mac_MainConfig *)calloc(1,
+//            sizeof(RadioResourceConfigDedicated_t::RadioResourceConfigDedicated__mac_MainConfig));
+//
+//    mac_MainCon->present = RadioResourceConfigDedicated__mac_MainConfig_PR_explicitValue;
+//    mac_MainCon->choice.explicitValue = (MAC_MainConfig_t *)calloc(1, sizeof(MAC_MainConfig_t));
+//    ASN_STRUCT_RESET(asn_DEF_MAC_MainConfig, mac_MainCon->choice.explicitValue);
+//    mac_MainCon->choice.explicitValue->timeAlignmentTimerDedicated = (TimeAlignmentTimer_t)TimeAlignmentTimer_infinity;
+//    mac_MainCon->choice.explicitValue->drx_Config = (DRX_Config_t *)calloc(1, sizeof(DRX_Config_t));
+//    ASN_STRUCT_RESET(asn_DEF_DRX_Config, mac_MainCon->choice.explicitValue->drx_Config);
+//
+//    mac_MainCon->choice.explicitValue->drx_Config->present = DRX_Config_PR_setup;
+//
+//    mac_MainCon->choice.explicitValue->drx_Config->choice.setup =
+//            (DRX_Config_t::DRX_Config_u::DRX_Config__setup *)calloc(1, sizeof(DRX_Config_t::DRX_Config_u::DRX_Config__setup));
+//    auto *drxsetup = mac_MainCon->choice.explicitValue->drx_Config->choice.setup;
+//    drxsetup->onDurationTimer = (long)DRX_Config__setup__onDurationTimer_psf6;
+//    //setup->onDurationTimer = 5L;
+//
+//    drxsetup->drx_InactivityTimer = (long)DRX_Config__setup__drx_InactivityTimer_psf10;
+//    //setup->drx_InactivityTimer = 7L; //(long)DRX_Config__setup__drx_InactivityTimer_psf10;
+//
+//    drxsetup->drx_RetransmissionTimer = (long)DRX_Config__setup__drx_RetransmissionTimer_psf24;
+//    //setup->drx_RetransmissionTimer = 6L;(long)DRX_Config__setup__drx_RetransmissionTimer_psf24;
+//    drxsetup->longDRX_CycleStartOffset.present = DRX_Config__setup__longDRX_CycleStartOffset_PR_sf80;
+//    drxsetup->longDRX_CycleStartOffset.choice.sf80 = (long)54L;
+//    drxsetup->shortDRX = (DRX_Config_t::DRX_Config_u::DRX_Config__setup::DRX_Config__setup__shortDRX *)calloc(1,
+//            sizeof(DRX_Config_t::DRX_Config_u::DRX_Config__setup::DRX_Config__setup__shortDRX));
+//    drxsetup->shortDRX->shortDRX_Cycle = (long)DRX_Config__setup__shortDRX__shortDRX_Cycle_sf40;
+//    drxsetup->shortDRX->drxShortCycleTimer = (long)5;
+//
+//    r8.radioResourceConfigDedicated->srb_ToAddModList = nullptr;
+//
+//    r8.radioResourceConfigDedicated->mac_MainConfig = mac_MainCon;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//    r8.dedicatedInfoNASList = nullptr;
+//    r8.mobilityControlInfo = nullptr;
+//    r8.nonCriticalExtension = nullptr;
+//    r8.securityConfigHO = nullptr;
+//    //memcpy(r8.radioResourceConfigDedicated, radioResourceConfigDedicated, sizeof(RadioResourceConfigDedicated_t));
+//    if (asn_check_constraints(&asn_DEF_RadioResourceConfigDedicated, r8.radioResourceConfigDedicated, errbuf, &errlen) != 0) {
+//        fprintf(stderr, "%s Constraint validation failed: %s\n", asn_DEF_RadioResourceConfigDedicated.name, errbuf);
+//    } else {
+//
+//        char buffer[8192];
+//        std::size_t buffer_size = 8192;
+//
+//        asn_enc_rval_t er = asn_encode_to_buffer(nullptr,
+//                                                 ATS_BASIC_XER,
+//                                                 &asn_DEF_RadioResourceConfigDedicated,
+//                                                 r8.radioResourceConfigDedicated,
+//                                                 buffer,
+//                                                 buffer_size);
+//        if (er.encoded == -1) {
+//            fprintf(stderr, "Error encoding to buffer %s, %s\n", asn_DEF_RadioResourceConfigDedicated.name, strerror(errno));
+//        } else if (er.encoded > (ssize_t) buffer_size) {
+//            fprintf(stderr, "Buffer of size %d is to small for %s needs %ld\n",
+//                    (int) buffer_size,
+//                    asn_DEF_RadioResourceConfigDedicated.name,
+//                    er.encoded);
+//        } else {
+//            fprintf(stdout, "Encoding past : %s\n", buffer);
+//        }
+//
+//        char *printBuffer;
+//        FILE *stream = open_memstream(&printBuffer, &size);
+//        asn_fprint(stream, &asn_DEF_RadioResourceConfigDedicated, r8.radioResourceConfigDedicated);
+//        fprintf(stdout, "use asn_fprintf : %s\n", printBuffer);
+//    }
+//
+//
+//    if (asn_check_constraints(&asn_DEF_RRCConnectionReestablishment_r8_IEs, &r8, errbuf, &errlen) != 0) {
+//        fprintf(stderr, "%s Constraint validation failed: %s\n", asn_DEF_RRCConnectionReestablishment_r8_IEs.name, errbuf);
+//    } else {
+//        char *printBuffer;
+//        FILE *stream = open_memstream(&printBuffer, &size);
+//
+//        char buffer[8192] {};
+//        std::size_t buffer_size = 8192;
+//
+//        asn_enc_rval_t er = asn_encode_to_buffer(nullptr,
+//                                                 ATS_BASIC_XER,
+//                                                 &asn_DEF_RRCConnectionReestablishment_r8_IEs,
+//                                                 &r8,
+//                                                 buffer,
+//                                                 buffer_size);
+//        if (er.encoded == -1) {
+//            fprintf(stderr, "Error encoding to buffer %s, %s\n", asn_DEF_RRCConnectionReestablishment_r8_IEs.name, strerror(errno));
+//            fprintf(stderr, "buffer in error = \n %s\n", buffer);
+//        } else if (er.encoded > (ssize_t) buffer_size) {
+//            fprintf(stderr, "Buffer of size %d is to small for %s needs %ld\n",
+//                    (int) buffer_size,
+//                    asn_DEF_RRCConnectionReestablishment_r8_IEs.name,
+//                    er.encoded);
+//        } else {
+//            fprintf(stdout, "encoded XML result : %s\n", buffer);
+//        }
+//
+//        asn_fprint(stream, &asn_DEF_RRCConnectionReestablishment_r8_IEs, &r8);
+//        fprintf(stdout, "Encoding using asn_fprintf : %s\n", printBuffer);
+//    }
+//
+//
+//
+//
+//
+//
+//    auto *dlDcch = (DL_DCCH_Message_t *)calloc(1, sizeof(DL_DCCH_Message_t));
+//    ASN_STRUCT_RESET(asn_DEF_DL_DCCH_Message, dlDcch);
+//
+//    auto *dlDcchType = (DL_DCCH_MessageType_t *)calloc(1, sizeof(DL_DCCH_MessageType_t));
+////    value DL-DCCH-Message ::=
+////                  {
+//    ASN_STRUCT_RESET(asn_DEF_DL_DCCH_MessageType, dlDcchType);
+//
+//
+//    dlDcchType->present = DL_DCCH_MessageType_PR_c1;
+//    auto *choich = (DL_DCCH_MessageType_t::DL_DCCH_MessageType_u *)calloc(1, sizeof(DL_DCCH_MessageType_t::DL_DCCH_MessageType_u));
+//    memcpy(&dlDcchType->choice, choich, sizeof(DL_DCCH_MessageType_t::DL_DCCH_MessageType_u));
+//
+//    auto *c1 = (DL_DCCH_MessageType_t::DL_DCCH_MessageType_u::DL_DCCH_MessageType__c1 *)
+//            calloc(1, sizeof(DL_DCCH_MessageType_t::DL_DCCH_MessageType_u::DL_DCCH_MessageType__c1));
+//    memcpy(&dlDcchType->choice.c1, c1, sizeof(DL_DCCH_MessageType_t::DL_DCCH_MessageType_u::DL_DCCH_MessageType__c1));
+//
+//    auto *rrcConnReCon = (RRCConnectionReconfiguration_t *)calloc(1, sizeof(RRCConnectionReconfiguration_t));
+//    ASN_STRUCT_RESET(asn_DEF_RRCConnectionReconfiguration, rrcConnReCon);
+//    c1->choice.rrcConnectionReconfiguration = rrcConnReCon;
+//    c1->present = DL_DCCH_MessageType__c1_PR_rrcConnectionReconfiguration;
+//
+//
+//    //                          message c1 : rrcConnectionReconfiguration :
+//    rrcConnReCon->rrc_TransactionIdentifier = 1;
+//    rrcConnReCon->criticalExtensions.present = RRCConnectionReconfiguration__criticalExtensions_PR_c1;
+////                  {
+////                      rrc-TransactionIdentifier 1,
+//
+//
+////                              criticalExtensions c1 : rrcConnectionReconfiguration-r8 :
+////                      {
+//
+//    auto extC1 = (RRCConnectionReconfiguration::RRCConnectionReconfiguration__criticalExtensions::RRCConnectionReconfiguration__criticalExtensions_u::RRCConnectionReconfiguration__criticalExtensions__c1 *)
+//            calloc(1,
+//                   sizeof(RRCConnectionReconfiguration::RRCConnectionReconfiguration__criticalExtensions::RRCConnectionReconfiguration__criticalExtensions_u::RRCConnectionReconfiguration__criticalExtensions__c1));
+//    memset(extC1, 0, sizeof(RRCConnectionReconfiguration::RRCConnectionReconfiguration__criticalExtensions::RRCConnectionReconfiguration__criticalExtensions_u::RRCConnectionReconfiguration__criticalExtensions__c1));
+//    rrcConnReCon->criticalExtensions.choice.c1 = extC1;
+//    extC1->present = RRCConnectionReconfiguration__criticalExtensions__c1_PR_rrcConnectionReconfiguration_r8;
+//
+//
+////                          measConfig
+////                          {
+////                              measIdToRemoveList
+//
+//
+////                          radioResourceConfigDedicated
+//
+//
+//    memcpy(&dlDcch->message, dlDcchType, sizeof(DL_DCCH_MessageType_t));
+//
+//
+//    if (asn_check_constraints(&asn_DEF_DL_DCCH_MessageType, &dlDcch->message, errbuf, &errlen) != 0) {
+//        fprintf(stderr, "%s Constraint validation failed: %s\n", asn_DEF_DL_DCCH_MessageType.name, errbuf);
+//    } else {
+//        char *printBuffer;
+//        FILE *stream = open_memstream(&printBuffer, &size);
+//        asn_fprint(stream, &asn_DEF_DL_DCCH_MessageType, dlDcchType);
+//        fprintf(stdout, "Encoding past : %s\n", printBuffer);
+//
+//    }
+//
+//
+//    if (asn_check_constraints(&asn_DEF_DL_DCCH_Message, &dlDcch, errbuf, &errlen) != 0) {
+//        fprintf(stderr, "%s Constraint validation failed: %s\n", asn_DEF_DL_DCCH_Message.name, errbuf);
+//    }
+//    else {
+//        char buffer[8192];
+//        std::size_t buffer_size = 8192;
+//
+//        asn_enc_rval_t er = asn_encode_to_buffer(nullptr,
+//                                                 ATS_BASIC_XER,
+//                                                 &asn_DEF_DL_DCCH_Message,
+//                                                 &dlDcch, buffer,
+//                                                 buffer_size);
+//        //asn_enc_rval_t er = asn_encode_to_buffer(0, ATS_BASIC_XER, typeDescriptor, objectData, buffer, buffer_size);
+//        if (er.encoded == -1) {
+//            fprintf(stderr, "Error encoding to buffer %s, %s\n", asn_DEF_DL_DCCH_Message.name, strerror(errno));
+//        } else if (er.encoded > (ssize_t)buffer_size) {
+//            fprintf(stderr, "Buffer of size %d is to small for %s needs %ld\n",
+//                    (int)buffer_size,
+//                    asn_DEF_DL_DCCH_Message.name,
+//                    er.encoded);
+//        }
+//
+////        char *printBuffer;
+////        FILE *stream = open_memstream(&printBuffer, &size);
+////        asn_fprint(stream, &asn_DEF_DL_DCCH_Message, &dlDcch);
+////        fprintf(stdout, "Encoding past : %s", printBuffer);
+//
+//
+//    }
 }

@@ -54,59 +54,59 @@ extern "C"
 {
 #endif
 
-size_t encodeBuffer(int codingType,
+__attribute__ ((visibility ("default"))) size_t encodeBuffer(int codingType,
         asn_TYPE_descriptor_t *typeDescriptor,
         const void *objectData,
         uint8_t *buffer,
         size_t buffer_size);
 
-char *getJsonFromASN(int codingType, asn_TYPE_descriptor_t *typeDescriptor, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getJsonFromASN(int codingType, asn_TYPE_descriptor_t *typeDescriptor, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getBCCH_BCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getBCCH_BCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getBCCH_BCH_MESSAGE_MBMS(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getBCCH_BCH_MESSAGE_MBMS(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getBCCH_DL_SCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getBCCH_DL_SCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getBCCH_DL_SCH_MESSAGE_BR(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getBCCH_DL_SCH_MESSAGE_BR(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getBCCH_DL_SCH_MESSAGE_MBMS(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getBCCH_DL_SCH_MESSAGE_MBMS(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getMCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getMCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getPCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getPCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getDL_CCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getDL_CCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getDL_DCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getDL_DCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getUL_CCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getUL_CCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getUL_DCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getUL_DCCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getSC_MCCH_MESSAGE_R13(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getSC_MCCH_MESSAGE_R13(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getSBCCH_SL_BCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getSBCCH_SL_BCH_MESSAGE(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getSBCCH_SL_BCH_MESSAGE_V2X_R14(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getSBCCH_SL_BCH_MESSAGE_V2X_R14(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getBCCH_BCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getBCCH_BCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getBCCH_BCH_MESSAGE_TDD_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getBCCH_BCH_MESSAGE_TDD_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getBCCH_DL_SCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getBCCH_DL_SCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getPCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getPCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getDL_CCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getDL_CCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getDL_DCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getDL_DCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getUL_CCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getUL_CCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getSC_MCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getSC_MCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
-char *getUL_DCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
+__attribute__ ((visibility ("default"))) char *getUL_DCCH_MESSAGE_NB(int codingType, uint8_t *rcvBuffer, int &rcvBufferSize);
 
 #ifdef __cplusplus
 }

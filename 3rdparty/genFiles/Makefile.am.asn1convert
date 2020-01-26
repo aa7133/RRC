@@ -10,5 +10,5 @@ asn1convert_SOURCES = \
 regen: regenerate-from-asn1-source
 
 regenerate-from-asn1-source:
-	asn1c -fcompound-names -fincludes-quoted -fno-include-deps -findirect-choice -gen-PER -no-gen-OER -D. ../asnFiles/36331-f60-ASNfunctions.asn
+	asn1c -fcompound-names -findirect-choice -fincludes-quoted -fno-include-deps -gen-PER -no-gen-OER -D. ../asnFiles/36331-f60-ASNfunctions.asn
 
