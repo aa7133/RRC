@@ -1,7 +1,7 @@
-RRC parser from ASN to JSON
+RRC parser from ASN to XML
 ========
 
-## C++ library converts ASN encoded to JSON
+## C++ library converts ASN encoded to XML
 
 ### Usage
 
@@ -16,10 +16,6 @@ OR
 https://dev.to/bauripalash/how-to-run-c-programs-on-android-3cco
 
 ```bash
-mkdir 3rdparty
-cd 3rdparty
-git clone https://github.com/Cheedoong/xml2json.git
-
 #now on RRC directory
 
 mkdir build
