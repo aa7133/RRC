@@ -16,10 +16,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DASN_DISABLE_OER_SUPPORT -DASN_PDU_COLL
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DASN_DISABLE_OER_SUPPORT -DASN_PDU_COLLECTION -L. -fvisibility=hidden -g -ggdb -O0 -L/usr/lib -Wall -W -Wpedantic")
 
 
-#add_library(rrc ${RRC_PARSER_SRCS} ${RRC_PARSER_HDRS} ${ASN_MODULE_SRCS} ${ASN_MODULE_HDRS})
+add_library(rrc ${RRC_PARSER_SRCS} ${RRC_PARSER_HDRS} ${ASN_MODULE_SRCS} ${ASN_MODULE_HDRS})
 
-#link_libraries(rt rrc  pthread)
-link_libraries(rt pthread)
+link_libraries(rt rrc  pthread)
+#link_libraries(rt pthread)
 
 add_executable(asntest
         ${RRC_PARSER_SRCS} ${RRC_PARSER_HDRS} ${ASN_MODULE_SRCS} ${ASN_MODULE_HDRS}
